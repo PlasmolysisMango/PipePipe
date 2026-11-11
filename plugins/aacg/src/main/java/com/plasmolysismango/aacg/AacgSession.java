@@ -31,11 +31,6 @@ public final class AacgSession {
     private Site cached;
     private long cachedAt;
 
-    /** Resolves the configured base even if the current run fell back to a stored mirror. */
-    public static String configuredBase(final AacgSettings settings) {
-        return AacgUrls.trimTrailingSlashes(settings.baseUrl());
-    }
-
     public Site site(final Downloader downloader, final AacgSettings settings)
             throws IOException, ExtractionException {
         synchronized (lock) {

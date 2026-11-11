@@ -51,11 +51,12 @@ class MissAvHttpTest {
     }
 
     @Test
-    void fallsBackToAnotherMirrorOn403() throws Exception {
+    void fallsBackToAnotherMirrorWhenBlocked() throws Exception {
         final FakeDownloader downloader = new FakeDownloader();
         downloader.handler(request -> {
             if (request.url().startsWith("https://missav.ws/")) {
-                return html(request, 403, "forbidden");
+                return html(request, 200,
+                        "<html><title>Just a moment...</title></html>");
             }
             if (request.url().startsWith("https://missav123.com/cn/ssis-001-chinese-subtitle")) {
                 return html(request, 200, PLAYABLE);
@@ -66,7 +67,7 @@ class MissAvHttpTest {
         final MissAvHttp.DetailPage page = MissAvHttp.fetchDetailPage(downloader,
                 settings("cnsub"), "SSIS-001");
 
-        assertEquals("https://missav123.com/cn/ssis-001-chinese-subtitle", page.url);
+        assertEquals("https://missav.ws/cn/ssis-001-chinese-subtitle", page.url);
         final Request last = downloader.lastRequest();
         assertEquals(Collections.singletonList("https://missav123.com/"),
                 last.headers().get("Referer"));

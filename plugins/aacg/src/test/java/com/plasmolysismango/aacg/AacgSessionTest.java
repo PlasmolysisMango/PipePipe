@@ -32,7 +32,6 @@ class AacgSessionTest {
         assertEquals(2, site.targets.size());
         assertEquals("primary", site.targets.get(0).kind);
         assertEquals("https://example.invalid/primary", settings.lastBase());
-        assertEquals("https://example.invalid/primary", AacgSession.configuredBase(settings));
     }
 
     @Test

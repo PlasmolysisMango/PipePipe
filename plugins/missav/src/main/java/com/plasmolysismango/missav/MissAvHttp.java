@@ -56,11 +56,15 @@ public final class MissAvHttp {
         String html;
         try {
             html = get(downloader, settings.requestHeaders(), url).responseBody();
+            if (isChallengePage(html)) {
+                html = fetchFromFallback(downloader, settings, url);
+            }
         } catch (final HttpStatusException e) {
-            if (e.status != 403) {
+            if (e.status == 403) {
+                html = fetchFromFallback(downloader, settings, url);
+            } else {
                 throw e;
             }
-            html = fetchFromFallback(downloader, settings, url);
         }
         if (isChallengePage(html)) {
             throw new AntiBotException("MissAV returned a Cloudflare challenge. "
@@ -83,11 +87,20 @@ public final class MissAvHttp {
             if (fallbackUrl.equals(url)) {
                 continue;
             }
+            final Response response;
             try {
-                return get(downloader, settings.requestHeaders("https://" + fallback),
-                        fallbackUrl).responseBody();
+                response = get(downloader, settings.requestHeaders("https://" + fallback),
+                        fallbackUrl);
             } catch (final HttpStatusException e) {
                 last = e;
+                continue;
+            }
+            final String body = response.responseBody();
+            if (!isChallengePage(body)) {
+                return body;
+            }
+            if (last == null) {
+                last = new HttpStatusException(403, fallbackUrl);
             }
         }
         if (last != null) {
