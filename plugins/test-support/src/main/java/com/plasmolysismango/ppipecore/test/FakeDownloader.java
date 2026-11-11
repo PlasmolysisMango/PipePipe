@@ -68,7 +68,7 @@ public final class FakeDownloader extends Downloader {
     @Nonnull
     @Override
     public Response execute(@Nonnull final Request request)
-            throws IOException, ReCaptchaException {
+            throws IOException, ExtractionException {
         requests.add(request);
         final Response response = responses.get(request.url());
         if (response != null) {
@@ -89,7 +89,7 @@ public final class FakeDownloader extends Downloader {
             throws IOException, ReCaptchaException {
         try {
             callback.onSuccess(execute(request));
-        } catch (final ReCaptchaException e) {
+        } catch (final ExtractionException e) {
             callback.onError(e);
         }
         return null;
