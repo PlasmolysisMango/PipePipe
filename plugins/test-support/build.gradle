@@ -1,3 +1,5 @@
 dependencies {
     api "com.github.InfinityLoop1308.PipePipeExtractor:extractor:$extractorVersion"
+    // The extractor exposes jsr305 annotations in its public signatures.
+    api "com.github.spotbugs:spotbugs-annotations:$spotbugsVersion"
 }
