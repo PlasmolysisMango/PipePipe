@@ -21,7 +21,7 @@ public final class AacgSearchQueryHandlerFactory extends SearchQueryHandlerFacto
         if (term.isEmpty() || ".".equals(term) || "..".equals(term)) {
             throw new ParsingException("Invalid 51吃瓜 search term: " + query);
         }
-        return AacgUrls.trimTrailingSlashes(settings.baseUrl()) + "/search/"
+        return AacgUrls.trimTrailingSlashes(settings.urlBase()) + "/search/"
                 + AacgUrls.encodeSegment(term) + "/";
     }
 

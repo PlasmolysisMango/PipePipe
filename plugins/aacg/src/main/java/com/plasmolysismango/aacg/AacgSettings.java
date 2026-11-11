@@ -13,6 +13,7 @@ public final class AacgSettings {
                     + "Chrome/131.0.0.0 Mobile Safari/537.36";
 
     private static final String LAST_BASE_KEY = "last_base";
+    private static final String BASE_URL_KEY = "base_url";
 
     private final PluginPreferences preferences;
 
@@ -32,10 +33,23 @@ public final class AacgSettings {
         }
     }
 
-    /** The last discovered mirror, falling back to the configured entry. */
+    /** The discovered mirror from earlier sessions, or the configured base as a guess. */
     public String baseUrl() {
         final String last = lastBase();
-        return last.isEmpty() ? entryUrl() : last;
+        return last.isEmpty() ? urlBase() : last;
+    }
+
+    /** The base the user configured, ignoring discovered mirrors. */
+    public String urlBase() {
+        final String value = preferences.getString(BASE_URL_KEY);
+        if (value == null || value.trim().isEmpty()) {
+            return entryUrl();
+        }
+        try {
+            return AacgUrls.normalize(value);
+        } catch (final IllegalArgumentException e) {
+            return entryUrl();
+        }
     }
 
     public String lastBase() {

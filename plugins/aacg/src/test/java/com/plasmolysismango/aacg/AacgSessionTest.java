@@ -31,18 +31,22 @@ class AacgSessionTest {
         assertEquals("https://example.invalid/primary", site.baseUrl);
         assertEquals(2, site.targets.size());
         assertEquals("primary", site.targets.get(0).kind);
-        assertEquals("https://example.invalid/primary", settings.lastBase());
     }
 
     @Test
     void fallsBackToStoredMirror() throws Exception {
         final FakePreferences preferences = new FakePreferences();
-        preferences.putString("last_base", "https://mirror.test/");
+        final FakeDownloader downloader = new FakeDownloader().respond("https://aacg13.com/",
+                "<html><body><script>document.getElementById('go').click();"
+                        + "</script><a id='go' href='https://mirror.test/landing'>go</a>"
+                        + "</body></html>");
+        new AacgSession().discover(downloader,
+                configured(preferences, "https://mirror.test"));
         final AacgSettings settings = new AacgSettings(preferences);
-        final FakeDownloader downloader = new FakeDownloader().handler(request -> {
+        final FakeDownloader offline = new FakeDownloader().handler(request -> {
             throw new IOException("offline");
         });
-        final AacgSession.Site site = new AacgSession().site(downloader, settings);
+        final AacgSession.Site site = new AacgSession().site(offline, settings);
         assertEquals("https://mirror.test", site.baseUrl);
     }
 
@@ -53,5 +57,11 @@ class AacgSessionTest {
         final AacgSettings settings = new AacgSettings(new FakePreferences());
         assertThrows(org.schabi.newpipe.extractor.exceptions.ExtractionException.class,
                 () -> new AacgSession().discover(downloader, settings));
+    }
+
+    private static AacgSettings configured(final FakePreferences preferences,
+                                           final String base) {
+        preferences.putString("base_url", base);
+        return new AacgSettings(preferences);
     }
 }

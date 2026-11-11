@@ -27,6 +27,20 @@ public final class AacgSession {
         }
     }
 
+    /** Article URL on the base the user configured, independent of stored mirrors. */
+    static String articleUrl(final AacgSettings settings, final String id) {
+        return AacgUrls.trimTrailingSlashes(settings.urlBase()) + "/archives/" + id + "/";
+    }
+
+    private static String selectBase(final List<AacgConfigParser.Target> targets) {
+        for (final AacgConfigParser.Target target : targets) {
+            if ("primary".equals(target.kind)) {
+                return AacgUrls.trimTrailingSlashes(target.url);
+            }
+        }
+        return AacgUrls.trimTrailingSlashes(targets.get(0).url);
+    }
+
     private final Object lock = new Object();
     private Site cached;
     private long cachedAt;
@@ -110,7 +124,7 @@ public final class AacgSession {
                                 + " is invalid", e);
                     }
                 }
-                return new Site(AacgUrls.trimTrailingSlashes(targets.get(0).url), targets);
+                return new Site(selectBase(targets), targets);
             }
             final String next;
             try {

@@ -35,12 +35,7 @@ public final class AacgLinkHandlerFactory extends LinkHandlerFactory {
 
     @Override
     public String getUrl(final String id) {
-        return getUrl(id, settings.baseUrl());
-    }
-
-    @Override
-    public String getUrl(final String id, final String baseUrl) {
-        return AacgUrls.trimTrailingSlashes(baseUrl) + "/archives/" + id + "/";
+        return articleUrl(settings, id);
     }
 
     @Override

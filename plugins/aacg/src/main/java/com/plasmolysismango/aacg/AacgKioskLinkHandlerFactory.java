@@ -27,7 +27,7 @@ public final class AacgKioskLinkHandlerFactory extends ListLinkHandlerFactory {
     @Override
     public String getUrl(final String id, final List<FilterItem> contentFilter,
                          final List<FilterItem> sortFilter) {
-        return AacgUrls.trimTrailingSlashes(settings.baseUrl()) + "/";
+        return AacgUrls.trimTrailingSlashes(settings.urlBase()) + "/";
     }
 
     @Override

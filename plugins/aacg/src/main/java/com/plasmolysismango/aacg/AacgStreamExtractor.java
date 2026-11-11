@@ -43,20 +43,9 @@ public final class AacgStreamExtractor extends StreamExtractor {
             throws IOException, ExtractionException {
         final AacgSession.Site site = session.site(downloader, settings);
         baseUrl = site.baseUrl;
-        final String url = getUrl();
-        final AacgHttp.Page page;
-        try {
-            page = AacgHttp.getPage(downloader, settings, url, baseUrl + "/");
-        } catch (final IOException e) {
-            final String rebased = rebase(url, baseUrl);
-            if (rebased == null || rebased.equals(url)) {
-                throw e;
-            }
-            final AacgHttp.Page retried = AacgHttp.getPage(downloader, settings, rebased,
-                    baseUrl + "/");
-            article = parse(retried);
-            return;
-        }
+        final String path = AacgUrls.path(getUrl());
+        final String url = AacgUrls.trimTrailingSlashes(baseUrl) + path;
+        final AacgHttp.Page page = AacgHttp.getPage(downloader, settings, url, baseUrl + "/");
         article = parse(page);
     }
 
@@ -66,19 +55,6 @@ public final class AacgStreamExtractor extends StreamExtractor {
         } catch (final IllegalArgumentException e) {
             throw new ParsingException("51吃瓜 article: " + e.getMessage(), e);
         }
-    }
-
-    @Nullable
-    private static String rebase(final String url, final String baseUrl) {
-        try {
-            final String path = AacgUrls.path(url);
-            if (path.startsWith("/archives/")) {
-                return AacgUrls.trimTrailingSlashes(baseUrl) + path;
-            }
-        } catch (final IllegalArgumentException e) {
-            return null;
-        }
-        return null;
     }
 
     @Override
