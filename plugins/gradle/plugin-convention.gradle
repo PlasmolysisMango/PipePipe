@@ -66,7 +66,7 @@ def dex = tasks.register('dex', Exec) {
             throw new GradleException('Android SDK not found: set sdk.dir in local.properties or ANDROID_HOME')
         }
         def d8 = new File(sdkDir, "build-tools/$buildToolsVersion/d8")
-        def androidJar = new File(sdkDir, 'platforms/android-37/android.jar')
+        def androidJar = new File(sdkDir, 'platforms/android-37.0/android.jar')
         def out = outDir.get().asFile
         project.delete(out)
         out.mkdirs()

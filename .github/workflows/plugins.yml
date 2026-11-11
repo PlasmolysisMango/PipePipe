@@ -65,7 +65,7 @@ jobs:
 
       - name: Install build tools
         run: |
-          sdkmanager --install "platforms;android-37" "build-tools;37.0.0"
+          sdkmanager --install "platforms;android-37.0" "build-tools;37.0.0"
 
       - name: Configure local build
         run: |
@@ -106,7 +106,7 @@ jobs:
 
       - name: Install build tools
         run: |
-          sdkmanager --install "platforms;android-37" "build-tools;37.0.0"
+          sdkmanager --install "platforms;android-37.0" "build-tools;37.0.0"
 
       - name: Configure local build
         run: |

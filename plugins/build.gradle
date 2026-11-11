@@ -30,6 +30,22 @@ subprojects {
         options.encoding = 'UTF-8'
         options.release = 11
     }
+    // `release` would also make the variants advertise a JVM 11 target, and then the
+    // included PipePipeExtractor build (toolchain 25, java-library) would refuse to
+    // substitute the extractor dependency. The bytecode level is set by `release`;
+    // the attribute only affects variant matching.
+    plugins.withId('java-library') {
+        configurations.named('apiElements') {
+            outgoing.attributes {
+                attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25)
+            }
+        }
+        configurations.named('runtimeElements') {
+            outgoing.attributes {
+                attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25)
+            }
+        }
+    }
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
         systemProperty 'java.awt.headless', 'true'
