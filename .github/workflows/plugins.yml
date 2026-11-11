@@ -19,6 +19,8 @@ on:
 
 env:
   REPO_NAME: PlasmolysisMango PipePipe Plugins
+  # SHA-256 of the client release certificate (KEY_ALIAS pipepipe-plugins).
+  RELEASE_CERT_SHA256: 30:1A:02:9B:40:19:35:D3:C7:6B:03:AC:6E:F7:A0:F5:CB:4F:9D:DF:96:81:B7:B6:47:44:F4:7B:96:EE:B7:AB
 
 jobs:
   test:
@@ -103,8 +105,8 @@ jobs:
           path: plugins/build/repo/*.ppp
           if-no-files-found: error
 
-  # The upstream 5.5.0 release has no plugin system; this debug APK is built from
-  # the client submodule, which carries the plugin API patches.
+  # The upstream 5.5.0 release has no plugin system; this APK is built from the client
+  # submodule, which carries the plugin API patches.
   client:
     runs-on: ubuntu-latest
     steps:
@@ -121,14 +123,37 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Restore signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "KEYSTORE_BASE64 secret is not set" >&2
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/client.keystore"
+
       - name: Build plugin-enabled APK
         working-directory: PipePipeClient
-        run: ./gradlew assembleDebug -DskipFormatKtlint --stacktrace
+        env:
+          KEY_PATH: ${{ runner.temp }}/client.keystore
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease -DskipFormatKtlint --stacktrace
+
+      - name: Verify APK is signed with the release key
+        run: |
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -1)
+          for apk in PipePipeClient/app/build/outputs/apk/release/*.apk; do
+            "$apksigner" verify --print-certs "$apk" | grep "Signer #1 certificate DN"
+          done
 
       - uses: actions/upload-artifact@v4
         with:
           name: plugin-enabled-apk
-          path: PipePipeClient/app/build/outputs/apk/debug/*.apk
+          path: PipePipeClient/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
   release:
@@ -200,8 +225,10 @@ jobs:
 
           ${index_url}
 
-          The PipePipe_*.apk assets are debug builds of the client in this repository and are
-          the only builds with plugin support (upstream 5.5.0 has none), so use one of them.
+          The PipePipe_*.apk assets are the client in this repository, the only builds with
+          plugin support (upstream 5.5.0 has none). They are signed with this repository's own
+          release key, not the upstream one, so uninstall the official PipePipe first.
+          Certificate SHA-256: ${RELEASE_CERT_SHA256}
           Adult content: enable plugin support and "show NSFW" in the app settings.
           EOF
           if gh release view "$tag" > /dev/null 2>&1; then
