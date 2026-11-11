@@ -8,6 +8,7 @@ import org.schabi.newpipe.extractor.StreamingService;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
+import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.linkhandler.LinkHandler;
 import org.schabi.newpipe.extractor.stream.AudioStream;
 import org.schabi.newpipe.extractor.stream.DeliveryMethod;
@@ -51,7 +52,7 @@ public final class MissAvStreamExtractor extends StreamExtractor {
     }
 
     @Override
-    public String getName() {
+    public String getName() throws ParsingException {
         if (detail != null && !detail.title.isEmpty()) {
             return detail.title;
         }
