@@ -10,6 +10,7 @@ import com.plasmolysismango.ppipecore.Urls;
 import org.schabi.newpipe.extractor.StreamingService;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Response;
+import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.stream.StreamInfoItem;
 import org.schabi.newpipe.extractor.stream.StreamType;
@@ -50,7 +51,7 @@ public final class MissAvRecombeeClient {
                                               final MissAvSettings settings,
                                               final String keyword,
                                               int count)
-            throws IOException, ParsingException {
+            throws IOException, ExtractionException {
         if (count <= 0 || count > 100) {
             count = 36;
         }

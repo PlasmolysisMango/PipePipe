@@ -9,6 +9,7 @@ import org.schabi.newpipe.extractor.channel.ChannelTabExtractor;
 import org.schabi.newpipe.extractor.comments.CommentsExtractor;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
+import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 import org.schabi.newpipe.extractor.kiosk.KioskList;
 import org.schabi.newpipe.extractor.linkhandler.LinkHandler;
 import org.schabi.newpipe.extractor.linkhandler.LinkHandlerFactory;
@@ -176,7 +177,12 @@ public final class AacgService extends StreamingService implements PluginImagePr
             return cached;
         }
         final Downloader downloader = NewPipe.getDownloader();
-        final byte[] raw = AacgHttp.getImage(downloader, settings, url);
+        final byte[] raw;
+        try {
+            raw = AacgHttp.getImage(downloader, settings, url);
+        } catch (final ReCaptchaException e) {
+            throw new IOException("51吃瓜: cover image requires a captcha", e);
+        }
         final byte[] decoded;
         try {
             decoded = AacgImageCipher.decode(raw);

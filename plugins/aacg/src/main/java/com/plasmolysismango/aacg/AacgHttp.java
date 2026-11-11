@@ -3,6 +3,8 @@ package com.plasmolysismango.aacg;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.AntiBotException;
+import org.schabi.newpipe.extractor.exceptions.ExtractionException;
+import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -46,7 +48,7 @@ public final class AacgHttp {
 
     public static Page getPage(final Downloader downloader, final AacgSettings settings,
                                final String url, final String referer)
-            throws IOException, AntiBotException {
+            throws IOException, ExtractionException {
         final String validated = validate(url);
         final Response response = downloader.get(validated,
                 toMultiMap(settings.pageHeaders(referer)));
@@ -65,7 +67,8 @@ public final class AacgHttp {
     }
 
     public static byte[] getImage(final Downloader downloader, final AacgSettings settings,
-                                  final String url) throws IOException {
+                                  final String url)
+            throws IOException, ReCaptchaException {
         final String validated = validate(url);
         final Response response = downloader.get(validated,
                 toMultiMap(settings.imageHeaders()));
