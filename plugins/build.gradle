@@ -18,6 +18,10 @@ allprojects {
 subprojects {
     apply plugin: 'java-library'
 
+    dependencies {
+        testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    }
+
     java {
         toolchain {
             languageVersion = JavaLanguageVersion.of(25)
