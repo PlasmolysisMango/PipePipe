@@ -17,7 +17,8 @@ class AacgSessionTest {
 
     @Test
     void followsForwardingThenReadsRoutes() throws Exception {
-        final AacgSettings settings = new AacgSettings(new FakePreferences());
+        final FakePreferences preferences = new FakePreferences();
+        final AacgSettings settings = new AacgSettings(preferences);
         final FakeDownloader downloader = new FakeDownloader()
                 .respond("https://aacg13.com/",
                         "<html><body><script>document.getElementById('go').click();"
@@ -35,7 +36,8 @@ class AacgSessionTest {
 
     @Test
     void fallsBackToStoredMirror() throws Exception {
-        final AacgSettings settings = new AacgSettings(new FakePreferences());
+        final FakePreferences preferences = new FakePreferences();
+        final AacgSettings settings = new AacgSettings(preferences);
         final FakeDownloader downloader = new FakeDownloader()
                 .respond("https://aacg13.com/",
                         "<html><body><script>document.getElementById('go').click();"
@@ -51,7 +53,7 @@ class AacgSessionTest {
             throw new IOException("offline");
         });
         final AacgSession.Site site = new AacgSession().site(offline,
-                new AacgSettings(settings.preferences));
+                new AacgSettings(preferences));
         assertEquals("https://example.invalid/primary", site.baseUrl);
     }
 

@@ -20,10 +20,6 @@ public final class AacgSettings {
         this.preferences = preferences;
     }
 
-    public PluginPreferences preferences() {
-        return preferences;
-    }
-
     public String entryUrl() {
         final String value = preferences.getString("entry_url");
         if (value == null || value.trim().isEmpty()) {
