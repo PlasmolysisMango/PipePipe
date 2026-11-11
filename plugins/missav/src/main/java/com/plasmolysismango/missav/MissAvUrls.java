@@ -2,6 +2,8 @@ package com.plasmolysismango.missav;
 
 import com.plasmolysismango.ppipecore.Urls;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -178,11 +180,16 @@ public final class MissAvUrls {
     }
 
     public static String replaceHost(final String url, final String newHost) {
-        final String host = Urls.host(url);
-        if (host == null || host.isEmpty()) {
+        try {
+            final URI uri = new URI(url);
+            if (uri.getHost() == null || uri.getHost().isEmpty()) {
+                return url;
+            }
+            return new URI(uri.getScheme(), null, newHost, uri.getPort(), uri.getRawPath(),
+                    uri.getRawQuery(), uri.getRawFragment()).toString();
+        } catch (final URISyntaxException e) {
             return url;
         }
-        return url.replaceFirst("://" + Pattern.quote(host), "://" + newHost);
     }
 
     /** Whether a list page link is navigation or a variant suffix rather than a video card. */

@@ -31,6 +31,11 @@ public final class AacgSession {
     private Site cached;
     private long cachedAt;
 
+    /** Resolves the configured base even if the current run fell back to a stored mirror. */
+    public static String configuredBase(final AacgSettings settings) {
+        return AacgUrls.trimTrailingSlashes(settings.baseUrl());
+    }
+
     public Site site(final Downloader downloader, final AacgSettings settings)
             throws IOException, ExtractionException {
         synchronized (lock) {
@@ -110,7 +115,7 @@ public final class AacgSession {
                                 + " is invalid", e);
                     }
                 }
-                return new Site(selectBase(targets), targets);
+                return new Site(AacgUrls.trimTrailingSlashes(targets.get(0).url), targets);
             }
             final String next;
             try {
@@ -127,12 +132,4 @@ public final class AacgSession {
         }
     }
 
-    private static String selectBase(final List<AacgConfigParser.Target> targets) {
-        for (final AacgConfigParser.Target target : targets) {
-            if ("primary".equals(target.kind)) {
-                return AacgUrls.trimTrailingSlashes(target.url);
-            }
-        }
-        return AacgUrls.trimTrailingSlashes(targets.get(0).url);
-    }
 }

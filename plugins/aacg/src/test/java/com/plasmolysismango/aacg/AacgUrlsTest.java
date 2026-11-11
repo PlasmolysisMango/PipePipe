@@ -27,7 +27,7 @@ class AacgUrlsTest {
         assertThrows(IllegalArgumentException.class,
                 () -> AacgUrls.normalize("https://user:pass@example.com/"));
         assertThrows(IllegalArgumentException.class,
-                () -> AacgUrls.normalize("ftp://example.com/"));
+                () -> AacgUrls.parse("ftp://example.com/"));
         assertThrows(IllegalArgumentException.class,
                 () -> AacgUrls.normalize("https://example.com\\path"));
     }
