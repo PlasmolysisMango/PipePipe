@@ -76,7 +76,7 @@ public final class MissAvHttp {
         final String host = Urls.host(url);
         HttpStatusException last = null;
         for (final String fallback : MissAvUrls.FALLBACK_DOMAINS) {
-            if (fallback.equalsIgnoreCase(host)) {
+            if (host != null && fallback.equalsIgnoreCase(host)) {
                 continue;
             }
             final String fallbackUrl = MissAvUrls.replaceHost(url, fallback);

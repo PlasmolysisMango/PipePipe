@@ -19,7 +19,8 @@ class AacgConfigParserTest {
             + "\"value\":\"https://EXAMPLE.invalid/primary#landing\",\"badge\":"
             + "\"Recommended\"}],\"backup_domain\":{\"name\":\"Backup\",\"value\":"
             + "\"https://backup.example.invalid/\",\"badge\":\"\"},"
-            + "\"randomDomain\":\"1\",\"zz_line\":\"unused.example.invalid\"}";
+            + "\"randomDomain\":\"1\",\"zz_line\":\"unused.example.invalid\","
+            + "\"zz_backup_line\":\"unused-backup.example.invalid\"}";
 
     @Test
     void decodesKnownAnswer() throws Exception {

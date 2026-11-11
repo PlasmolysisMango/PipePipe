@@ -24,7 +24,9 @@ class AacgSessionTest {
                                 + "</script><a id='go' href='/landing'>go</a></body></html>")
                 .respond("https://aacg13.com/landing",
                         "<html><body><script>window.appConfig = {data:'" + CONFIG_DATA
-                                + "', key:'" + CONFIG_KEY + "'};</script></body></html>");
+                                + "', key:'" + CONFIG_KEY + "'};</script></body></html>")
+                .respond("https://example.invalid/primary",
+                        "<html><body>primary</body></html>");
         final AacgSession.Site site = new AacgSession().discover(downloader, settings);
         assertEquals("https://example.invalid/primary", site.baseUrl);
         assertEquals(2, site.targets.size());

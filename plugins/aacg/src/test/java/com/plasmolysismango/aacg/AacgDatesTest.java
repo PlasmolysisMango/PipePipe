@@ -9,8 +9,8 @@ class AacgDatesTest {
 
     @Test
     void parsesOffsetDateTime() {
-        assertEquals("2024-01-02T03:04:05Z",
-                AacgDates.parse("2024-01-02T03:04:05+08:00").toInstant().toString());
+        assertEquals("2024-01-02T03:04:05+08:00",
+                AacgDates.parse("2024-01-02T03:04:05+08:00").toString());
     }
 
     @Test
