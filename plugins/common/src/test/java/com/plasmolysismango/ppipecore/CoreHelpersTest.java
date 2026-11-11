@@ -83,7 +83,9 @@ class CoreHelpersTest {
     @Test
     void cleansAndParsesText() {
         assertEquals("a & b", Text.clean("  a &amp; b  "));
-        assertEquals("SSIS-001", Text.stripCodeFromTitle("SSIS-001 Title", "SSIS-001"));
+        assertEquals("Title", Text.stripCodeFromTitle("SSIS-001 Title", "SSIS-001"));
+        assertEquals("タイトル", Text.stripCodeFromTitle("SSIS-001 タイトル", "SSIS-001"));
+        assertEquals("", Text.stripCodeFromTitle("SSIS-001", "SSIS-001"));
         assertEquals(7200, Text.parseDurationSeconds("120分"));
         assertEquals(7980, Text.parseDurationSeconds("2:13:00"));
         assertEquals(3660, Text.parseDurationSeconds("1小时 1分"));
