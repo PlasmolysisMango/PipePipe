@@ -96,7 +96,7 @@ public final class FakeDownloader extends Downloader {
             throws IOException, ReCaptchaException {
         try {
             callback.onSuccess(execute(request));
-        } catch (final ReCaptchaException e) {
+        } catch (final IOException | ExtractionException e) {
             callback.onError(e);
         }
         return null;
