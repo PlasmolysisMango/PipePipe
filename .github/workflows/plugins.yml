@@ -147,7 +147,10 @@ jobs:
         run: |
           apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -1)
           for apk in PipePipeClient/app/build/outputs/apk/release/*.apk; do
-            "$apksigner" verify --print-certs "$apk" | grep "Signer #1 certificate DN"
+            echo "== $(basename "$apk")"
+            certs=$("$apksigner" verify --print-certs "$apk" 2>/dev/null)
+            echo "$certs" | grep "certificate DN"
+            echo "$certs" | grep -i "SHA-256" | sed 's/^ *//'
           done
 
       - uses: actions/upload-artifact@v4
