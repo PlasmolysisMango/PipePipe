@@ -1,0 +1,32 @@
+{
+  "pluginId": "com.plasmolysismango.aacg",
+  "name": "51吃瓜",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "apiVersion": "1.1",
+  "author": "PlasmolysisMango",
+  "entryClass": "com.plasmolysismango.aacg.AacgPlugin",
+  "icon": "icon.png",
+  "nsfw": true,
+  "description": "51吃瓜 (AACG) video source with decrypted covers (adult content).",
+  "settings": [
+    {
+      "key": "entry_url",
+      "type": "string",
+      "title": "Entry URL",
+      "summary": "The site's entry page; mirrors are discovered automatically.",
+      "default": "https://aacg13.com/"
+    },
+    {
+      "key": "decrypt_images",
+      "type": "boolean",
+      "title": "Decrypt cover images",
+      "summary": "Requires the plugin-enabled PipePipe build.",
+      "default": true
+    }
+  ],
+  "theme": {
+    "light": "#FF9800",
+    "dark": "#E65100"
+  }
+}

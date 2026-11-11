@@ -1,0 +1,87 @@
+diff --git a/app/src/main/java/org/schabi/newpipe/util/PicassoHelper.java b/app/src/main/java/org/schabi/newpipe/util/PicassoHelper.java
+index d55bf4d6f..08d9fcb7d 100644
+--- a/app/src/main/java/org/schabi/newpipe/util/PicassoHelper.java
++++ b/app/src/main/java/org/schabi/newpipe/util/PicassoHelper.java
+@@ -20,6 +20,8 @@ import com.squareup.picasso.Transformation;
+ import org.schabi.newpipe.R;
+ import org.schabi.newpipe.extractor.ServiceList;
+ import org.schabi.newpipe.extractor.StreamingService;
++import org.schabi.newpipe.extractor.plugin.PluginImage;
++import org.schabi.newpipe.extractor.plugin.PluginImageProvider;
+ 
+ import java.io.File;
+ import java.io.IOException;
+@@ -28,15 +30,19 @@ import java.util.concurrent.TimeUnit;
+ import java.util.function.Consumer;
+ 
+ import okhttp3.Interceptor;
++import okhttp3.MediaType;
+ import okhttp3.OkHttpClient;
++import okhttp3.Protocol;
+ import okhttp3.Request;
+ import okhttp3.Response;
++import okhttp3.ResponseBody;
+ 
+ public final class PicassoHelper {
+     public static final String PLAYER_THUMBNAIL_TAG = "PICASSO_PLAYER_THUMBNAIL_TAG";
+     private static final String PLAYER_THUMBNAIL_TRANSFORMATION_KEY
+             = "PICASSO_PLAYER_THUMBNAIL_TRANSFORMATION_KEY";
+     private static final String TAG = "PicassoHelper";
++    private static final int MAX_PLUGIN_IMAGE_BYTES = 8 * 1024 * 1024;
+ 
+     private PicassoHelper() {
+     }
+@@ -119,6 +125,53 @@ public final class PicassoHelper {
+             throws IOException {
+         final Request request = chain.request();
+         final String url = request.url().toString();
++
++        // Plugins may supply decoded bytes for urls the app cannot read directly, for
++        // example cover images the site stores encrypted.
++        for (final StreamingService service : ServiceList.all()) {
++            if (!(service instanceof PluginImageProvider)) {
++                continue;
++            }
++            final PluginImageProvider provider = (PluginImageProvider) service;
++            final boolean handled;
++            try {
++                handled = provider.handlesImage(url);
++            } catch (final RuntimeException e) {
++                Log.e(TAG, "Image check of " + service + " failed", e);
++                continue;
++            }
++            if (!handled) {
++                continue;
++            }
++            try {
++                final PluginImage image = provider.loadImage(url);
++                final byte[] data = image.getData();
++                if (data.length > MAX_PLUGIN_IMAGE_BYTES) {
++                    Log.w(TAG, "Image from " + service + " is too large, using network");
++                    continue;
++                }
++                final MediaType mediaType = MediaType.parse(image.getMediaType());
++                if (mediaType == null) {
++                    Log.w(TAG, "Image from " + service + " has an invalid type, using network");
++                    continue;
++                }
++                return new Response.Builder()
++                        .request(request)
++                        .protocol(Protocol.HTTP_1_1)
++                        .code(200)
++                        .message("OK")
++                        .header("Content-Type", image.getMediaType())
++                        .header("Cache-Control",
++                                "public, max-age=" + image.getMaxAgeSeconds())
++                        .body(ResponseBody.create(mediaType, data))
++                        .build();
++            } catch (final Exception | LinkageError e) {
++                // a broken plugin must not break image loading; use the network instead
++                Log.e(TAG, "Image from " + service + " could not be decoded", e);
++                continue;
++            }
++        }
++
+         for (final StreamingService service : ServiceList.all()) {
+             final Map<String, String> headers;
+             try {

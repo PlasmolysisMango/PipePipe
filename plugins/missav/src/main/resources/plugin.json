@@ -1,0 +1,42 @@
+{
+  "pluginId": "com.plasmolysismango.missav",
+  "name": "MissAV",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "apiVersion": "1.1",
+  "author": "PlasmolysisMango",
+  "entryClass": "com.plasmolysismango.missav.MissAvPlugin",
+  "icon": "icon.png",
+  "nsfw": true,
+  "description": "MissAV video source (adult content).",
+  "settings": [
+    {
+      "key": "base_url",
+      "type": "string",
+      "title": "Base URL",
+      "default": "https://missav.ws"
+    },
+    {
+      "key": "user_agent",
+      "type": "string",
+      "title": "User-Agent",
+      "default": "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
+    },
+    {
+      "key": "variant",
+      "type": "string",
+      "title": "Preferred variant",
+      "summary": "cnsub, uncensored or normal",
+      "default": "cnsub"
+    }
+  ],
+  "login": {
+    "url": "https://missav.ws/",
+    "cookie": "cf_clearance",
+    "key": "login_cookies"
+  },
+  "theme": {
+    "light": "#E91E63",
+    "dark": "#AD1457"
+  }
+}

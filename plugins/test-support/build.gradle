@@ -1,0 +1,3 @@
+dependencies {
+    api "com.github.InfinityLoop1308.PipePipeExtractor:extractor:$extractorVersion"
+}

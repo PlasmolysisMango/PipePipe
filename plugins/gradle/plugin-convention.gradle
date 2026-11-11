@@ -1,0 +1,103 @@
+// Packaging logic shared by plugin modules (the modules declaring plugin.json).
+//
+// A .ppp package is a zip that contains the plugin classes (jar layout) and
+// classes.dex, plus plugin.json and the icon. The extractor, jsoup, nanojson and
+// commons-lang3 are compileOnly: the host provides them at runtime.
+
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) {
+    localPropsFile.withInputStream { localProps.load(it) }
+}
+def sdkDir = localProps.getProperty('sdk.dir') ?: System.getenv('ANDROID_HOME')
+
+def manifestFile = file('src/main/resources/plugin.json')
+def manifestJson = new groovy.json.JsonSlurper().parse(manifestFile)
+
+apply plugin: 'java-library'
+
+// d8 (build-tools) accepts class files up to Java 11; the JDK 25 toolchain replaces the
+// compiler only, so staying on older language levels costs nothing.
+tasks.withType(JavaCompile).configureEach {
+    options.release = 11
+}
+
+dependencies {
+    compileOnly "com.github.InfinityLoop1308.PipePipeExtractor:extractor:$extractorVersion"
+    compileOnly "com.github.TeamNewPipe:nanojson:$nanojsonVersion"
+    compileOnly "org.jsoup:jsoup:$jsoupVersion"
+    compileOnly "org.apache.commons:commons-lang3:$lang3Version"
+    compileOnly "com.github.spotbugs:spotbugs-annotations:$spotbugsVersion"
+
+    implementation project(':common')
+
+    testImplementation "com.github.InfinityLoop1308.PipePipeExtractor:extractor:$extractorVersion"
+    testImplementation "com.github.TeamNewPipe:nanojson:$nanojsonVersion"
+    testImplementation "org.jsoup:jsoup:$jsoupVersion"
+    testImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"
+    testImplementation project(':test-support')
+}
+
+def extractDesugarConfig = tasks.register('extractDesugarConfig', Copy) {
+    from({ zipTree(rootProject.configurations.desugarConfig.singleFile) }) {
+        include 'META-INF/desugar/d8/desugar.json'
+        eachFile { it.path = it.name }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('desugar')
+}
+
+// Classes of this module plus the shared 'common' module, as one jar. The jar is
+// both the JVM flavor of the plugin package and the input handed to d8.
+def pluginJar = tasks.register('pluginJar', Jar) {
+    archiveFileName = "${project.name}-plugin.jar"
+    from sourceSets.main.output
+    from { rootProject.project(':common').sourceSets.main.output }
+    exclude 'META-INF/MANIFEST.MF'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+def dex = tasks.register('dex', Exec) {
+    dependsOn pluginJar, extractDesugarConfig
+    def jarFile = pluginJar.flatMap { it.archiveFile }
+    def outDir = layout.buildDirectory.dir('dex')
+    inputs.file(jarFile)
+    inputs.files(configurations.compileClasspath)
+    inputs.property('minApi', pluginMinSdk)
+    outputs.dir(outDir)
+    doFirst {
+        if (sdkDir == null) {
+            throw new GradleException('Android SDK not found: set sdk.dir in local.properties or ANDROID_HOME')
+        }
+        def d8 = new File(sdkDir, "build-tools/$buildToolsVersion/d8")
+        def androidJar = new File(sdkDir, 'platforms/android-37/android.jar')
+        def out = outDir.get().asFile
+        project.delete(out)
+        out.mkdirs()
+        def cmd = [d8.path, '--release', '--min-api', pluginMinSdk,
+                   '--lib', androidJar.path,
+                   '--desugared-lib', layout.buildDirectory.file('desugar/desugar.json').get().asFile.path,
+                   '--output', out.path]
+        configurations.compileClasspath.files.each { cmd += ['--classpath', it.path] }
+        cmd += jarFile.get().asFile.path
+        commandLine cmd
+    }
+}
+
+tasks.register('pluginPackage', Zip) {
+    group = 'plugin'
+    description = 'Build the signed-ready .ppp package'
+    dependsOn dex
+    archiveFileName = "${manifestJson.pluginId}-${manifestJson.versionCode}.ppp"
+    destinationDirectory = rootProject.layout.buildDirectory.dir('repo')
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    from({ zipTree(pluginJar.get().archiveFile.get().asFile) }) {
+        exclude 'META-INF/MANIFEST.MF'
+    }
+    from(layout.buildDirectory.dir('dex')) {
+        include 'classes.dex'
+    }
+}

@@ -1,0 +1,201 @@
+diff --git a/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PipePipePlugin.java b/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PipePipePlugin.java
+index a17b5457..dde57922 100644
+--- a/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PipePipePlugin.java
++++ b/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PipePipePlugin.java
+@@ -27,8 +27,12 @@ public interface PipePipePlugin {
+     /**
+      * Minor version of the plugin API. Minor bumps only add API; a plugin compiled against
+      * minor {@code n} can be loaded by any host with minor {@code >= n}.
++     *
++     * <p>1.1 adds {@link PluginImageProvider} / {@link PluginImage} for images the host
++     * cannot fetch or decode on its own, and {@code nsfw} in {@code plugin.json}
++     * ({@link PluginManifest#isNsfw()}).</p>
+      */
+-    int API_VERSION_MINOR = 0;
++    int API_VERSION_MINOR = 1;
+ 
+     /**
+      * @param serviceId the numeric id assigned by the host. It must be passed to the
+diff --git a/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginImage.java b/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginImage.java
+new file mode 100644
+index 00000000..cc512c72
+--- /dev/null
++++ b/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginImage.java
+@@ -0,0 +1,73 @@
++package org.schabi.newpipe.extractor.plugin;
++
++import java.util.Arrays;
++import java.util.Objects;
++import java.util.regex.Pattern;
++
++import javax.annotation.Nonnull;
++
++/**
++ * An image produced by a plugin from bytes that are not directly reachable by the client,
++ * for example an encrypted cover image that the plugin decrypted.
++ *
++ * <p>Instances are immutable. The data is copied on construction and on every
++ * {@link #getData()} call, so plugins may reuse their buffers.</p>
++ */
++public final class PluginImage {
++    public static final int DEFAULT_MAX_AGE_SECONDS = 3600;
++    /** Per-image cap; large enough for covers, small enough that a plugin cannot flood memory. */
++    public static final int MAX_DATA_BYTES = 8 * 1024 * 1024;
++
++    // Raster formats only: the host decodes these immediately, and SVG could carry script.
++    private static final Pattern MEDIA_TYPE_PATTERN =
++            Pattern.compile("^image/(png|jpeg|gif|webp|avif|bmp)$");
++
++    @Nonnull
++    private final byte[] data;
++    @Nonnull
++    private final String mediaType;
++    private final int maxAgeSeconds;
++
++    public PluginImage(@Nonnull final byte[] data, @Nonnull final String mediaType) {
++        this(data, mediaType, DEFAULT_MAX_AGE_SECONDS);
++    }
++
++    public PluginImage(@Nonnull final byte[] data,
++                       @Nonnull final String mediaType,
++                       final int maxAgeSeconds) {
++        Objects.requireNonNull(data, "data");
++        Objects.requireNonNull(mediaType, "mediaType");
++        if (data.length == 0) {
++            throw new IllegalArgumentException("Image data is empty");
++        }
++        if (data.length > MAX_DATA_BYTES) {
++            throw new IllegalArgumentException("Image data exceeds " + MAX_DATA_BYTES + " bytes");
++        }
++        if (!MEDIA_TYPE_PATTERN.matcher(mediaType).matches()) {
++            throw new IllegalArgumentException("Invalid image media type: " + mediaType);
++        }
++        if (maxAgeSeconds < 0) {
++            throw new IllegalArgumentException("maxAgeSeconds is negative");
++        }
++        this.data = Arrays.copyOf(data, data.length);
++        this.mediaType = mediaType;
++        this.maxAgeSeconds = maxAgeSeconds;
++    }
++
++    @Nonnull
++    public byte[] getData() {
++        return Arrays.copyOf(data, data.length);
++    }
++
++    @Nonnull
++    public String getMediaType() {
++        return mediaType;
++    }
++
++    /**
++     * @return how long the host may cache this image, in seconds
++     */
++    public int getMaxAgeSeconds() {
++        return maxAgeSeconds;
++    }
++}
+diff --git a/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginImageProvider.java b/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginImageProvider.java
+new file mode 100644
+index 00000000..47adfaa1
+--- /dev/null
++++ b/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginImageProvider.java
+@@ -0,0 +1,37 @@
++package org.schabi.newpipe.extractor.plugin;
++
++import java.io.IOException;
++
++import javax.annotation.Nonnull;
++
++/**
++ * Implemented by a {@link org.schabi.newpipe.extractor.StreamingService} that can supply the
++ * bytes of some of its image urls itself instead of letting the host download them.
++ *
++ * <p>This is the extension point for images the client cannot decode on its own, such as
++ * AES-encrypted cover images. Hosts look up the owning service for every image url and ask
++ * it before performing a normal network request.</p>
++ *
++ * <p>Added in plugin API 1.1.</p>
++ */
++public interface PluginImageProvider {
++    /**
++     * Must be cheap, pure and thread safe, and must never throw: hosts call it for every image
++     * request with an arbitrary url. Return {@code true} only for urls this provider owns.
++     *
++     * @param imageUrl the image url about to be loaded
++     * @return whether {@link #loadImage(String)} should be called for this url
++     */
++    boolean handlesImage(@Nonnull String imageUrl);
++
++    /**
++     * Loads and decodes an image. May perform network IO.
++     *
++     * @param imageUrl the url passed to {@link #handlesImage(String)}
++     * @return the decoded image
++     * @throws IOException when the image cannot be produced; hosts then fall back to a normal
++     *                     network request for the url
++     */
++    @Nonnull
++    PluginImage loadImage(@Nonnull String imageUrl) throws IOException;
++}
+diff --git a/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginManifest.java b/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginManifest.java
+index 9ee240a9..dbf4d218 100644
+--- a/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginManifest.java
++++ b/extractor/src/main/java/org/schabi/newpipe/extractor/plugin/PluginManifest.java
+@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
+  *   "legacyServiceId": 1,                     // optional, only for ex built-in services
+  *   "description": "...",                     // optional
+  *   "icon": "icon.png",                       // optional, path of a PNG/WebP in the package
++ *   "nsfw": true,                             // optional, marks adult content
+  *   "settings": [                             // optional
+  *     {"key": "instance", "type": "string", "title": "Instance", "default": "https://..."}
+  *   ],
+@@ -82,6 +83,7 @@ public final class PluginManifest {
+     private final PluginLogin login;
+     @Nullable
+     private final PluginTheme theme;
++    private final boolean nsfw;
+ 
+     private PluginManifest(@Nonnull final String pluginId,
+                            @Nonnull final String name,
+@@ -96,7 +98,8 @@ public final class PluginManifest {
+                            @Nullable final String icon,
+                            @Nonnull final List<PluginSetting> settings,
+                            @Nullable final PluginLogin login,
+-                           @Nullable final PluginTheme theme) {
++                           @Nullable final PluginTheme theme,
++                           final boolean nsfw) {
+         this.pluginId = pluginId;
+         this.name = name;
+         this.versionCode = versionCode;
+@@ -111,6 +114,7 @@ public final class PluginManifest {
+         this.settings = settings;
+         this.login = login;
+         this.theme = theme;
++        this.nsfw = nsfw;
+     }
+ 
+     @Nonnull
+@@ -187,7 +191,8 @@ public final class PluginManifest {
+                 icon,
+                 Collections.unmodifiableList(settings),
+                 login,
+-                theme);
++                theme,
++                o.getBoolean("nsfw", false));
+     }
+ 
+     public static boolean isValidPluginId(@Nullable final String pluginId) {
+@@ -303,4 +308,12 @@ public final class PluginManifest {
+     public PluginTheme getTheme() {
+         return theme;
+     }
++
++    /**
++     * @return whether the plugin declares adult content and hosts should hide it unless the
++     * user enabled NSFW content
++     */
++    public boolean isNsfw() {
++        return nsfw;
++    }
+ }

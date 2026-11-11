@@ -1,0 +1,52 @@
+// Multi-module PipePipe plugin repository.
+//
+//   ./gradlew assembleRepo    -> build/repo/*.ppp (one package per plugin module)
+//   ./gradlew :tools:index    -> build/repo/index.json (signed)
+//
+// All modules are compiled against the host's extractor API (compileOnly), so the
+// produced classes.dex relies on classes provided by PipePipe at runtime. The host
+// must provide the same extractor that local.properties points to via extractorDir.
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        systemProperty 'java.awt.headless', 'true'
+    }
+}
+
+configurations {
+    desugarConfig
+}
+
+dependencies {
+    desugarConfig "com.android.tools:desugar_jdk_libs_configuration:$desugarJdkLibsVersion"
+}
+
+// Aggregate task creating every plugin package in build/repo.
+def pluginProjects = subprojects.findAll {
+    new File(it.projectDir, 'src/main/resources/plugin.json').exists()
+}
+tasks.register('assembleRepo') {
+    group = 'plugin'
+    description = 'Build every plugin package into build/repo'
+    dependsOn pluginProjects.collect { "${it.path}:pluginPackage" }
+}
+
