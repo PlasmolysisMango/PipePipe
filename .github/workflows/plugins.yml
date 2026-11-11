@@ -61,11 +61,10 @@ jobs:
           cache: 'gradle'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install build tools
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
           sdkmanager --install "platforms;android-37" "build-tools;37.0.0"
 
       - name: Configure local build
@@ -103,11 +102,10 @@ jobs:
           cache: 'gradle'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install build tools
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
           sdkmanager --install "platforms;android-37" "build-tools;37.0.0"
 
       - name: Configure local build

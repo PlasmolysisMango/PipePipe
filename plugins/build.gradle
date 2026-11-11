@@ -23,8 +23,12 @@ subprojects {
             languageVersion = JavaLanguageVersion.of(25)
         }
     }
+    // d8 only accepts class files up to Java 11. Applied to every module (including
+    // :common and :test-support) so plugin modules never publish a consumer variant
+    // that their own dependencies cannot satisfy.
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
+        options.release = 11
     }
     tasks.withType(Test).configureEach {
         useJUnitPlatform()

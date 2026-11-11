@@ -16,12 +16,6 @@ def manifestJson = new groovy.json.JsonSlurper().parse(manifestFile)
 
 apply plugin: 'java-library'
 
-// d8 (build-tools) accepts class files up to Java 11; the JDK 25 toolchain replaces the
-// compiler only, so staying on older language levels costs nothing.
-tasks.withType(JavaCompile).configureEach {
-    options.release = 11
-}
-
 dependencies {
     compileOnly "com.github.InfinityLoop1308.PipePipeExtractor:extractor:$extractorVersion"
     compileOnly "com.github.TeamNewPipe:nanojson:$nanojsonVersion"
