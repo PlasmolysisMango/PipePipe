@@ -73,7 +73,7 @@ class AacgFeedExtractorsTest {
     private static FakePreferences preferences() {
         final Map<String, String> defaults = new LinkedHashMap<>();
         defaults.put("entry_url", "https://site.test/");
-        defaults.put("base_url", "https://site.test");
+        defaults.put("last_base", "https://site.test");
         defaults.put("decrypt_images", "true");
         return new FakePreferences(defaults);
     }

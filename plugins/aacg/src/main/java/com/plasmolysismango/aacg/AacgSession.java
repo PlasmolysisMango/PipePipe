@@ -29,7 +29,7 @@ public final class AacgSession {
 
     /** Article URL on the base the user configured, independent of stored mirrors. */
     static String articleUrl(final AacgSettings settings, final String id) {
-        return AacgUrls.trimTrailingSlashes(settings.urlBase()) + "/archives/" + id + "/";
+        return AacgUrls.trimTrailingSlashes(settings.entryUrl()) + "/archives/" + id + "/";
     }
 
     private static String selectBase(final List<AacgConfigParser.Target> targets) {
@@ -114,7 +114,12 @@ public final class AacgSession {
             }
             if (targets != null) {
                 if (targets.isEmpty()) {
-                    throw new ContentNotAvailableException("51吃瓜 config lists no mirrors");
+                    final String last = settings.lastBase();
+                    if (last.isEmpty()) {
+                        throw new ContentNotAvailableException(
+                                "51吃瓜 config lists no mirrors");
+                    }
+                    return new Site(last, targets);
                 }
                 for (final AacgConfigParser.Target target : targets) {
                     try {

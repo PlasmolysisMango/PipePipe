@@ -85,7 +85,7 @@ class AacgStreamExtractorTest {
     private static FakePreferences preferences(final String base) {
         final Map<String, String> defaults = new LinkedHashMap<>();
         defaults.put("entry_url", base + "/");
-        defaults.put("base_url", base);
+        defaults.put("last_base", base);
         defaults.put("decrypt_images", "true");
         return new FakePreferences(defaults);
     }
