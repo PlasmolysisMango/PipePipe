@@ -44,7 +44,15 @@ jobs:
         id: test
         working-directory: plugins
         continue-on-error: true
-        run: ./gradlew test --continue --stacktrace
+        run: ./gradlew test --continue
+
+      - name: Show test failures
+        if: steps.test.outcome == 'failure'
+        run: |
+          for xml in plugins/*/build/test-results/test/*.xml; do
+            [ -f "$xml" ] || continue
+            awk '/<failure /{p=1} p{print FILENAME": "$0} /<\/failure>/{p=0}' "$xml"
+          done
 
       - name: Upload test reports
         if: always()
