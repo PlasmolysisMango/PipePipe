@@ -23,28 +23,14 @@ subprojects {
             languageVersion = JavaLanguageVersion.of(25)
         }
     }
-    // d8 only accepts class files up to Java 11. Applied to every module (including
-    // :common and :test-support) so plugin modules never publish a consumer variant
-    // that their own dependencies cannot satisfy.
+    // d8 only accepts class files up to Java 11. `options.release` would also make the
+    // variants advertise a JVM 11 target, and consumers (including the included
+    // PipePipeExtractor build, which is toolchain 25) would then no longer match.
+    // sourceCompatibility keeps the variant attributes at the toolchain version while
+    // -source/-target still produce Java 11 bytecode.
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
-        options.release = 11
-    }
-    // `release` would also make the variants advertise a JVM 11 target, and then the
-    // included PipePipeExtractor build (toolchain 25, java-library) would refuse to
-    // substitute the extractor dependency. The bytecode level is set by `release`;
-    // the attribute only affects variant matching.
-    plugins.withId('java-library') {
-        configurations.named('apiElements') {
-            outgoing.attributes {
-                attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25)
-            }
-        }
-        configurations.named('runtimeElements') {
-            outgoing.attributes {
-                attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25)
-            }
-        }
+        options.compilerArgs += ['-source', '11', '-target', '11']
     }
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
