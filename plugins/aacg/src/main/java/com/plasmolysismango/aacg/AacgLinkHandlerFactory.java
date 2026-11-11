@@ -35,7 +35,7 @@ public final class AacgLinkHandlerFactory extends LinkHandlerFactory {
 
     @Override
     public String getUrl(final String id) {
-        return articleUrl(settings, id);
+        return AacgSession.articleUrl(settings, id);
     }
 
     @Override
