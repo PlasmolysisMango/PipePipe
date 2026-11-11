@@ -86,7 +86,11 @@ public final class FakeDownloader extends Downloader {
     public CancellableCall executeAsync(@Nonnull final Request request,
                                         @Nonnull final AsyncCallback callback)
             throws IOException, ReCaptchaException {
-        callback.onSuccess(execute(request));
+        try {
+            callback.onSuccess(execute(request));
+        } catch (final ReCaptchaException e) {
+            callback.onError(e);
+        }
         return null;
     }
 }

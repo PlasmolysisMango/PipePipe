@@ -41,8 +41,22 @@ jobs:
         run: echo "extractorDir=../PipePipeExtractor" > plugins/local.properties
 
       - name: Run plugin unit tests
+        id: test
         working-directory: plugins
-        run: ./gradlew :common:test :missav:test :aacg:test --stacktrace
+        continue-on-error: true
+        run: ./gradlew test --continue --stacktrace
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-test-reports
+          path: plugins/*/build/reports/tests/test
+          if-no-files-found: ignore
+
+      - name: Fail if tests failed
+        if: steps.test.outcome == 'failure'
+        run: exit 1
 
   package:
     runs-on: ubuntu-latest
