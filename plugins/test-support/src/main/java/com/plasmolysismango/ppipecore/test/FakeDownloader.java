@@ -4,6 +4,7 @@ import org.schabi.newpipe.extractor.downloader.CancellableCall;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Request;
 import org.schabi.newpipe.extractor.downloader.Response;
+import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ import javax.annotation.Nonnull;
 public final class FakeDownloader extends Downloader {
 
     public interface Handler {
-        Response handle(Request request) throws IOException;
+        Response handle(Request request) throws IOException, ExtractionException;
     }
 
     private final Map<String, Response> responses = new LinkedHashMap<>();
